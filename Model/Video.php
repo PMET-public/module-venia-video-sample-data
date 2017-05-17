@@ -3,7 +3,7 @@
  * Copyright © 2016 Magento. All rights reserved.
  * See COPYING.txt for license details.
  */
-namespace MagentoEse\VeniaCatalogSampleData\Model;
+namespace MagentoEse\VeniaVideoSampleData\Model;
 
 use Magento\Framework\Setup\SampleData\Context as SampleDataContext;
 use Magento\Catalog\Model\ResourceModel\Product\Gallery as GalleryResource;
@@ -32,23 +32,23 @@ class Video
      */
     private $metadataPool;
     /**
-     * @var \Magento\Catalog\Model\ResourceModel\Product\Collection
+     * @var \Magento\Catalog\Api\Data\ProductInterfaceFactory $productFactory
      */
-    protected $productCollection;
+    protected $productFactory;
 
     /**
      * @param SampleDataContext $sampleDataContext
      * @param GalleryResource $galleryResource
      * @param \Magento\ProductVideo\Model\ResourceModel\Video $videoResourceModel
      * @param \Magento\Eav\Model\Config $eavConfig
-     * @param \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+     * @param \Magento\Catalog\Api\Data\ProductInterfaceFactory $productFactory
      */
     public function __construct(
         SampleDataContext $sampleDataContext,
         GalleryResource $galleryResource,
         \Magento\ProductVideo\Model\ResourceModel\Video $videoResourceModel,
         \Magento\Eav\Model\Config $eavConfig,
-        \Magento\Catalog\Model\ResourceModel\Product\CollectionFactory $productCollectionFactory
+        \Magento\Catalog\Api\Data\ProductInterfaceFactory $productFactory
 
     ) {
         $this->fixtureManager = $sampleDataContext->getFixtureManager();
@@ -56,7 +56,7 @@ class Video
         $this->galleryResource = $galleryResource;
         $this->videoResourceModel = $videoResourceModel;
         $this->eavConfig = $eavConfig;
-        $this->productCollection = $productCollectionFactory->create()->addAttributeToSelect('sku');
+        $this->productFactory = $productFactory;
     }
 
     /**
@@ -80,7 +80,9 @@ class Video
                     $data[$header[$key]] = $value;
                 }
                 $row = $data;
-                $productId = $this->getProductIdBySku($row['sku']);
+                $product = $this->productFactory->create();
+                $product->load($product->getIdBySku($row['sku']));
+                $productData = $product->getData();
                 $linkField = $this->getMetadataPool()->getMetadata(ProductInterface::class)->getLinkField();
                 $mediaAttribute = $this->eavConfig->getAttribute('catalog_product', 'media_gallery');
 
@@ -92,16 +94,16 @@ class Video
                 ]);
                 //INSERT INTO `catalog_product_entity_media_gallery` (`attribute_id`, `value`, `media_type`) VALUES ('90', '/V/D/VD11-LY_main.jpg', 'external-video')
 
-                $this->galleryResource->bindValueToEntity($id, $productId);
+                $this->galleryResource->bindValueToEntity($id, $productData['row_id']);
                 // INSERT INTO `catalog_product_entity_media_gallery_value_to_entity` (`value_id`,`row_id`) VALUES ('5200', '3190') ON DUPLICATE KEY UPDATE `value_id` = VALUES(`value_id`), `row_id` = VALUES(`row_id`)
 
 
                 $this->galleryResource->insertGalleryValueInStore([
                     'value_id' => $id,
                     'store_id' => \Magento\Store\Model\Store::DEFAULT_STORE_ID,
-                    $linkField => $productId,
+                    $linkField =>  $productData['row_id'],
                     'label' => 'Video',
-                    'position' => 4
+                    'position' => $row['position']
                 ]);
                 //INSERT INTO `catalog_product_entity_media_gallery_value` (`value_id`, `store_id`, `row_id`, `label`, `position`) VALUES ('5200', '0', '3190', 'Video', '4')
 
@@ -136,23 +138,5 @@ class Video
         }
     }
 
-    /**
-     * Retrieve product ID by sku
-     *
-     * @param string $sku
-     * @return int|null
-     */
-    protected function getProductIdBySku($sku)
-    {
-        if (empty($this->productIds)) {
-            foreach ($this->productCollection as $product) {
-                $this->productIds[$product->getSku()] = $product->getId();
-            }
-        }
-        if (isset($this->productIds[$sku])) {
-            return $this->productIds[$sku];
-        }
-        return null;
-    }
 
 }

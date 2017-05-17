@@ -30,7 +30,7 @@ class Installer implements Setup\SampleData\InstallerInterface
 
     public function __construct(
         \Magento\Framework\App\State $state,
-        \MagentoEse\VeniaCatalogSampleData\Model\Video $video
+        \MagentoEse\VeniaVideoSampleData\Model\Video $video
     ) {
         $this->video = $video;
         try{
