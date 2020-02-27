@@ -6,6 +6,7 @@
 namespace MagentoEse\VeniaVideoSampleData\Setup;
 
 use Magento\Framework\Setup;
+use Magento\Indexer\Model\Processor as Indexer;
 
 class Installer implements Setup\SampleData\InstallerInterface
 {
@@ -16,23 +17,27 @@ class Installer implements Setup\SampleData\InstallerInterface
      */
     protected $state;
 
-    /**
-     * @var \MagentoEse\VeniaCatalogSampleData\Model\Video
-     */
+   /** @var \MagentoEse\VeniaVideoSampleData\Model\Video  */
     protected $video;
 
 
+    /** @var Indexer  */
+    protected $indexer;
+
+
     /**
+     * Installer constructor.
      * @param \Magento\Framework\App\State $state
-     * @param \MagentoEse\VeniaCatalogSampleData\Model\Video $video
+     * @param \MagentoEse\VeniaVideoSampleData\Model\Video $video
+     * @param Indexer $index
      */
-
-
     public function __construct(
         \Magento\Framework\App\State $state,
-        \MagentoEse\VeniaVideoSampleData\Model\Video $video
+        \MagentoEse\VeniaVideoSampleData\Model\Video $video,
+        Indexer $index
     ) {
         $this->video = $video;
+        $this->indexer = $index;
         try{
             $state->setAreaCode('adminhtml');
         }
@@ -47,6 +52,7 @@ class Installer implements Setup\SampleData\InstallerInterface
      */
     public function install()
     {
+        $this->indexer->reindexAll();
         //add video
         $this->video->install(['MagentoEse_VeniaVideoSampleData::fixtures/veniaVideo.csv']);
     }
