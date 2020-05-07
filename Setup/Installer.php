@@ -52,7 +52,7 @@ class Installer implements Setup\SampleData\InstallerInterface
      */
     public function install()
     {
-        $this->indexer->reindexAll();
+        //$this->indexer->reindexAll();
         //add video
         $this->video->install(['MagentoEse_VeniaVideoSampleData::fixtures/veniaVideo.csv']);
     }
